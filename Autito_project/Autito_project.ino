@@ -1,10 +1,5 @@
 // ----------- INCLUDE ----------- //
 
-#include "Arduino.h"
-#include "embedia.h"
-//#include "embedia_model.h"
-#include "sequential_13_model.h"
-
 // --> CAM
 #include "esp_camera.h" 
 
@@ -45,19 +40,13 @@
 
 
 // --> Const utilizados en la funcion averagePooling()
-  // Definir tamaño de la imagen original y la imagen resultante
-  #define ORIG_SIZE 96 //--> size original img
-  #define POOL_SIZE 48 //--> size pooling img
-  //#define INPUT_SIZE (ORIG_SIZE * ORIG_SIZE)
-
-
-
+  #define INPUT_WIDTH 96
+  #define INPUT_HEIGHT 96
+  #define INPUT_SIZE 9216 // INPUT_WIDTH * INPUT_HEIGHT
 float foto[INPUT_SIZE];
-float fotoMaxPooleada[INPUT_SIZE];
-float fotoAveragePooleada[INPUT_SIZE];
-data3d_t input = { INPUT_CHANNELS, INPUT_WIDTH, INPUT_HEIGHT, foto};
-data1d_t results;
-char * labels[] = {"Piedra","Papel","Tijera","Nada "};
+
+
+char * labels[] = {"Adelante","Izquierda","Derecha"};
 
 // ----------- setup ----------- //
 
@@ -106,7 +95,7 @@ void setup() {
   }
   
   // Model init
-  model_init();
+  //model_init();
 
   // Camera init
   esp_err_t err = esp_camera_init(&config);
@@ -120,52 +109,114 @@ void setup() {
 
 // ----------- loop ----------- //
 
-
 void loop() {
   camera_fb_t * fb = NULL;
 
   fb = esp_camera_fb_get();
   if (!fb) {
     ESP_LOGE(TAG, "Camera capture failed");
+    return;
   }
-
-  uint32_t i;
-
-  maxPooling(fb->buf, fotoMaxPooleada, ORIG_SIZE, POOL_SIZE);  // IMPORTANT!! -> foto = foto with averagePooling 
-  averagePooling(fb->buf, fotoAveragePooleada, ORIG_SIZE, POOL_SIZE);  // IMPORTANT!! -> foto = foto with averagePooling 
-
-  float usarMax = 1.0f;
-  foto = usarMax ? fotoMaxPooleada : fotoAveragePooleada;
-  
-  printImage();
-
-  printVectors();
 
   Serial.print("Formato: ");  Serial.print(fb->format);
   Serial.print(", Len: ");    Serial.print(fb->len);
   Serial.print(", Width: ");  Serial.print(fb->width);
   Serial.print(", Height: "); Serial.println(fb->height);
 
+  //unsigned long tiempo = millis();
+  uint16_t prediction = predict_direction(fb->buf, fb->width, fb->height, 3);
+  //tiempo = millis() - tiempo;
+
+  Serial.print("Prediccion ->  "); Serial.println(labels[prediction]);
+  //Serial.print("Tiempo Inferencia en ms: "); Serial.println(tiempo);
+
   esp_camera_fb_return(fb);
-
-  input.data = foto;
-  // normalizacion
-  for (uint16_t i = 0; i < INPUT_SIZE; i++) {
-    input.data[i] = input.data[i] * 0.00392;
-  }
-
-  unsigned long tiempo = millis();
-  uint16_t prediction = model_predict_class(input, &results);
-  tiempo = millis() - tiempo; 
-  
-  Serial.print("Prediccion numero ->  "); Serial.println(labels[prediction]);
-  Serial.print("Tiempo Inferencia en ms: "); Serial.println(tiempo);
-  
   delay(500);
   Serial.println();
 }
 
 
+
+
+
+
+
+
+uint16_t predict_direction(uint8_t* image, int width, int height, int channels) {
+    uint8_t* binary_image = apply_threshold(image, width, height, channels, 128); // Umbral de 128 como ejemplo
+
+    // Suponiendo que 'foto' es un array de float de tamaño 9216
+    for (int i = 0; i < 9216; i++) {
+        foto[i] = static_cast<float>(image[i]); // Convertir cada elemento de uint8_t a float y asignarlo a 'foto'
+    }
+    printImage(); // Aquí se imprimirá la imagen original convertida a float
+
+    for (int i = 0; i < 9216; i++) {
+        foto[i] = static_cast<float>(binary_image[i]); // Convertir cada elemento de uint8_t a float y asignarlo a 'foto'
+    }
+    printImage(); // Aquí se imprimirá la imagen trasformada convertida a float
+
+    uint16_t result = simple_pixel_sumation(binary_image, width, height, channels);
+    free(binary_image); // Liberar memoria
+    return result;
+}
+
+
+
+// Function to apply thresholding to an image
+uint8_t* apply_threshold(const uint8_t* image, int width, int height, int channels, int threshold) {
+    int pixel_count = width * height * channels;
+    uint8_t* binary_image = (uint8_t*)malloc(pixel_count * sizeof(uint8_t)); // Crear un nuevo vector para la imagen transformada
+    
+    for (int i = 0; i < pixel_count; i += channels) {
+        // Convertir RGB a escala de grises usando la fórmula de luminancia
+        unsigned char gray = (0.299 * image[i] + 0.587 * image[i+1] + 0.114 * image[i+2]);
+
+        // Aplicar el umbral
+        unsigned char binary = (gray > threshold) ? 255 : 0;
+
+        // Establecer todos los canales de color al valor binario
+        binary_image[i] = binary;      // Canal Rojo
+        binary_image[i+1] = binary;    // Canal Verde
+        binary_image[i+2] = binary;    // Canal Azul
+    }
+
+    return binary_image;
+}
+
+
+uint16_t simple_pixel_sumation(const uint8_t* image, int width, int height, int channels) {
+    int mid_x = width / 2;
+    int left_white_count = count_white_pixels(image, width, height, channels, 0, mid_x);
+    int right_white_count = count_white_pixels(image, width, height, channels, mid_x, width);
+
+    Serial.print("Pixeles blancos en el lado izquierdo: "); Serial.println(left_white_count);
+    Serial.print("Pixeles blancos en el lado derecho: "); Serial.println(right_white_count);
+
+    const int SOME_THRESHOLD = 100; // Valor de umbral para decidir si la diferencia es significativa
+
+    if (abs(left_white_count - right_white_count) < SOME_THRESHOLD) {
+        return 0; // Ir hacia adelante
+    } else if (left_white_count > right_white_count) {
+        return 1; // Girar a la izquierda
+    } else {
+        return 2; // Girar a la derecha
+    }
+}
+
+// Function to count white pixels in a specific region
+int count_white_pixels(const uint8_t* image, int width, int height, int channels, int start_x, int end_x) {
+    int count = 0;
+    for (int y = 0; y < height; y++) {
+        for (int x = start_x; x < end_x; x++) {
+            int index = (y * width + x) * channels;
+            if (image[index] == 255) { // Pixel blanco
+                count++;
+            }
+        }
+    }
+    return count;
+}
 // ----------- printImage ----------- //
 
 
@@ -237,15 +288,6 @@ void printImage(){
 
 }
 
-
-// ----------- printVectors ----------- //
-// --->  Para ver los vectores
-void printVectors(uint8_t * v){
-  Serial.print("Imagen original: "); printVectorInt(fb->buf);  
-  Serial.print("Imagen con maxPooling: "); printVectorFloat(fotoMaxPooleada);  
-  Serial.print("Imagen con averagePooling: "); printVectorFloat(fotoAveragePooleada);  
-}
-
 // ----------- printVectorInt ----------- //
 // ---> Imprime los valores enteros que representan la imagen original capturada
 // ---> Utiliza el formato de numpy array para facilitar su análisis posterior
@@ -258,8 +300,6 @@ void printVectorInt(uint8_t * v){
     }
     Serial.println("]}");
 }
-
-
 
 // ----------- printVectorFloat ----------- //
 // ---> Imprime los valores en float que representan la imagen procesada
@@ -275,43 +315,3 @@ void printVectorFloat(float * v){
     Serial.println("]}");
 }
 
-
-// ----------- averagePooling ----------- //
-
-void averagePooling(uint8_t* input, float* output, int origSize, int poolSize) {
-  int stride = origSize / poolSize;
-  for (int i = 0; i < poolSize; i++) {
-    for (int j = 0; j < poolSize; j++) {
-      float sumVal = 0.0;
-      for (int m = 0; m < stride; m++) {
-        for (int n = 0; n < stride; n++) {
-          int x = i * stride + m;
-          int y = j * stride + n;
-          sumVal += input[x * origSize + y];
-        }
-      }
-      output[i * poolSize + j] = sumVal / (stride * stride);
-    }
-  }
-}
-
-// ----------- maxPooling ----------- //
-
-void maxPooling(uint8_t* input, float* output, int origSize, int poolSize) {
-  int stride = origSize / poolSize;
-  for (int i = 0; i < poolSize; i++) {
-    for (int j = 0; j < poolSize; j++) {
-      uint8_t maxVal = 0;
-      for (int m = 0; m < stride; m++) {
-        for (int n = 0; n < stride; n++) {
-          int x = i * stride + m;
-          int y = j * stride + n;
-          if (input[x * origSize + y] > maxVal) {
-            maxVal = input[x * origSize + y];
-          }
-        }
-      }
-      output[i * poolSize + j] = maxVal;
-    }
-  }
-}
