@@ -17,13 +17,10 @@ La idea es lograr que un autito se maneje solo
 
 ## Objetivos del Proyecto
 
-### 1. Desarrollo de Modelos de TinyML 
-Crear modelos de aprendizaje automático que sean eficientes en términos de tamaño y consumo de energía para su ejecución en dispositivos embebidos.
-
-### 2. Implementación en Hardware
-Integrar los modelos desarrollados en microcontroladores demostrando casos de uso prácticos como detección de objetos.
+BLANK
 
 ## Contenido
 
 ### Carpetas Principales
 
+BLANK
