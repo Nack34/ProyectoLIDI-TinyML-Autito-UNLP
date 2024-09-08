@@ -124,6 +124,7 @@ void loop() {
   Serial.print(", Height: "); Serial.println(fb->height);
 
   //unsigned long tiempo = millis();
+  Serial.print("Imagen original: "); printVectorInt(fb->buf);  
   uint16_t prediction = predict_direction(fb->buf, fb->width, fb->height, 3);
   //tiempo = millis() - tiempo;
 
@@ -156,6 +157,8 @@ uint16_t predict_direction(uint8_t* image, int width, int height, int channels) 
     }
     printImage(); // Aquí se imprimirá la imagen trasformada convertida a float
 
+    Serial.print("Imagen transformada: "); printVectorFloat(foto);  
+    
     uint16_t result = simple_pixel_sumation(binary_image, width, height, channels);
     free(binary_image); // Liberar memoria
     return result;
@@ -293,12 +296,12 @@ void printImage(){
 // ---> Utiliza el formato de numpy array para facilitar su análisis posterior
 void printVectorInt(uint8_t * v){
     int i;
-    Serial.print("vector_orig = np.array{[");
+    Serial.print("vector_orig = np.array([");
     for(i=0;i<96*96;i++){
         Serial.print(v[i]);
         Serial.print(",");
     }
-    Serial.println("]}");
+    Serial.println("])");
 }
 
 // ----------- printVectorFloat ----------- //
@@ -307,11 +310,11 @@ void printVectorInt(uint8_t * v){
 
 void printVectorFloat(float * v){
     int i;
-    Serial.print("vector_recortado = np.array{[");
+    Serial.print("vector_recortado = np.array([");
     for(i=0;i<INPUT_SIZE;i++){
         Serial.print(v[i]);
         Serial.print(",");
     }
-    Serial.println("]}");
+    Serial.println("])");
 }
 
