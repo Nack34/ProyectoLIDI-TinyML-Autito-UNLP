@@ -125,10 +125,10 @@ void loop() {
 
   //unsigned long tiempo = millis();
   Serial.print("Imagen original: "); printVectorInt(fb->buf);  
-  uint16_t prediction = predict_direction(fb->buf, fb->width, fb->height, 3);
+  int degrees_predicted = predict_direction(fb->buf, fb->width, fb->height);
   //tiempo = millis() - tiempo;
 
-  Serial.print("Prediccion ->  "); Serial.println(labels[prediction]);
+  Serial.print("Prediccion ->  "); Serial.println(degrees_predicted);
   //Serial.print("Tiempo Inferencia en ms: "); Serial.println(tiempo);
 
   esp_camera_fb_return(fb);
@@ -137,14 +137,9 @@ void loop() {
 }
 
 
-
-
-
-
-
-
-uint16_t predict_direction(uint8_t* image, int width, int height, int channels) {
-    uint8_t* binary_image = apply_threshold(image, width, height, channels, 128); // Umbral de 128 como ejemplo
+int predict_direction(uint8_t* image, int width, int height) {
+    // Aplicar el umbral a la imagen en escala de grises
+    uint8_t* binary_image = apply_threshold_grayscale(image, width, height, 128); // Umbral de 128 como ejemplo
 
     // Suponiendo que 'foto' es un array de float de tamaño 9216
     for (int i = 0; i < 9216; i++) {
@@ -155,64 +150,60 @@ uint16_t predict_direction(uint8_t* image, int width, int height, int channels) 
     for (int i = 0; i < 9216; i++) {
         foto[i] = static_cast<float>(binary_image[i]); // Convertir cada elemento de uint8_t a float y asignarlo a 'foto'
     }
-    printImage(); // Aquí se imprimirá la imagen trasformada convertida a float
+    printImage(); // Aquí se imprimirá la imagen transformada convertida a float
 
-    Serial.print("Imagen transformada: "); printVectorFloat(foto);  
-    
-    uint16_t result = simple_pixel_sumation(binary_image, width, height, channels);
+    Serial.print("Imagen transformada: "); printVectorFloat(foto);
+
+    // Sumar los píxeles blancos en la imagen binaria
+    int result = simple_pixel_sumation(binary_image, width, height);
     free(binary_image); // Liberar memoria
     return result;
 }
 
-
-
-// Function to apply thresholding to an image
-uint8_t* apply_threshold(const uint8_t* image, int width, int height, int channels, int threshold) {
-    int pixel_count = width * height * channels;
-    uint8_t* binary_image = (uint8_t*)malloc(pixel_count * sizeof(uint8_t)); // Crear un nuevo vector para la imagen transformada
+// Función para aplicar el umbral a una imagen en escala de grises
+uint8_t* apply_threshold_grayscale(const uint8_t* image, int width, int height, int threshold) {
+    int pixel_count = width * height;
+    uint8_t* binary_image = (uint8_t*)malloc(pixel_count * sizeof(uint8_t)); // Crear un nuevo vector para la imagen binaria
     
-    for (int i = 0; i < pixel_count; i += channels) {
-        // Convertir RGB a escala de grises usando la fórmula de luminancia
-        unsigned char gray = (0.299 * image[i] + 0.587 * image[i+1] + 0.114 * image[i+2]);
-
+    for (int i = 0; i < pixel_count; i++) {
         // Aplicar el umbral
-        unsigned char binary = (gray > threshold) ? 255 : 0;
+        unsigned char binary = (image[i] > threshold) ? 255 : 0;
 
-        // Establecer todos los canales de color al valor binario
-        binary_image[i] = binary;      // Canal Rojo
-        binary_image[i+1] = binary;    // Canal Verde
-        binary_image[i+2] = binary;    // Canal Azul
+        // Establecer el valor binario en la imagen de salida
+        binary_image[i] = binary;
     }
 
     return binary_image;
 }
 
-
-uint16_t simple_pixel_sumation(const uint8_t* image, int width, int height, int channels) {
+int simple_pixel_sumation(const uint8_t* image, int width, int height) {
     int mid_x = width / 2;
-    int left_white_count = count_white_pixels(image, width, height, channels, 0, mid_x);
-    int right_white_count = count_white_pixels(image, width, height, channels, mid_x, width);
+    // Contar los píxeles blancos en la mitad izquierda y derecha de la imagen binaria
+    int left_white_count = count_white_pixels(image, width, height, 0, mid_x);
+    int right_white_count = count_white_pixels(image, width, height, mid_x, width);
 
     Serial.print("Pixeles blancos en el lado izquierdo: "); Serial.println(left_white_count);
     Serial.print("Pixeles blancos en el lado derecho: "); Serial.println(right_white_count);
 
-    const int SOME_THRESHOLD = 100; // Valor de umbral para decidir si la diferencia es significativa
-
-    if (abs(left_white_count - right_white_count) < SOME_THRESHOLD) {
-        return 0; // Ir hacia adelante
-    } else if (left_white_count > right_white_count) {
-        return 1; // Girar a la izquierda
-    } else {
-        return 2; // Girar a la derecha
-    }
+    return calculate_degrees(left_white_count, right_white_count);
 }
 
-// Function to count white pixels in a specific region
-int count_white_pixels(const uint8_t* image, int width, int height, int channels, int start_x, int end_x) {
+#define ANGULOS_DE_GIRO 50
+
+// Calcular el ángulo de desviación en función de la diferencia de píxeles blancos
+int calculate_degrees(int left_white_count, int right_white_count){
+    int desviacion = right_white_count - left_white_count;
+    int totalPixelsBlancos = left_white_count + right_white_count;
+
+    return ANGULOS_DE_GIRO * desviacion / totalPixelsBlancos;
+}
+
+// Función para contar los píxeles blancos en una región específica de la imagen binaria
+int count_white_pixels(const uint8_t* image, int width, int height, int start_x, int end_x) {
     int count = 0;
     for (int y = 0; y < height; y++) {
         for (int x = start_x; x < end_x; x++) {
-            int index = (y * width + x) * channels;
+            int index = y * width + x;
             if (image[index] == 255) { // Pixel blanco
                 count++;
             }
@@ -220,6 +211,7 @@ int count_white_pixels(const uint8_t* image, int width, int height, int channels
     }
     return count;
 }
+
 // ----------- printImage ----------- //
 
 
