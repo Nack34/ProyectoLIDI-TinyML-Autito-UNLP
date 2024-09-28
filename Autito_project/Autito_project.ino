@@ -3,12 +3,16 @@
 
 // ----------- setup ----------- //
 void setup() {
-  pixel_sumation_init();
   wifi_init();
+  pixel_sumation_init();
 }
 
 // ----------- loop ----------- //
 
 void loop() {
-  wifi_iteration(pixel_sumation_iteration());
+  PredictionResult result = pixel_sumation_iteration();
+
+  wifi_iteration(result.prediccion, result.foto);
+  delay(500);
+  wifi_iteration(result.prediccion, result.foto);
 }
