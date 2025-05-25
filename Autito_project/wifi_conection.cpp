@@ -41,23 +41,10 @@ void wifi_init() {
     String content = "";
     content += "<html>";
     content += "<div id=\"contador\">Cargando grados...</div>";
-    content += "<canvas id=\"imageCanvas\" width=\"" + String(IMAGE_WIDTH) + "\" height=\"" + String(IMAGE_HEIGHT) + "\"></canvas>";
     content += "<script>";
     content += "function updateData() {";
     content += "fetch('/contador').then(response => response.text()).then(data => {";
     content += "document.getElementById('contador').innerHTML = 'Grados: ' + data; });";
-    content += "fetch('/imagen').then(response => response.json()).then(data => {";
-    content += "let canvas = document.getElementById('imageCanvas');";
-    content += "let ctx = canvas.getContext('2d');";
-    content += "let imgData = ctx.createImageData(" + String(IMAGE_WIDTH) + ", " + String(IMAGE_HEIGHT) + ");";
-    content += "for(let i = 0; i < data.length; i++) {";
-    content += "imgData.data[i * 4] = data[i];"; // Rojo
-    content += "imgData.data[i * 4 + 1] = data[i];"; // Verde
-    content += "imgData.data[i * 4 + 2] = data[i];"; // Azul
-    content += "imgData.data[i * 4 + 3] = 255;"; // Alpha
-    content += "}";
-    content += "ctx.putImageData(imgData, 0, 0);";
-    content += "});";
     content += "}";
     content += "setInterval(updateData, 1000);"; // Actualiza cada 1 segundo
     content += "</script>";
@@ -87,6 +74,11 @@ void wifi_init() {
 void wifi_iteration(int degrees, float* v) {
   grados = degrees;  // Actualizamos los grados
   imagen = v;        // Actualizamos el puntero a la imagen
-  server.handleClient();
-  delay(100);
 }
+// Función para manejar las actualizaciones periódicas
+void handleClient() {
+  server.handleClient();
+  //Serial.println("handleClient");
+
+}
+

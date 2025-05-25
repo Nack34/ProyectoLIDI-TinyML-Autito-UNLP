@@ -8,3 +8,4 @@
 
 void wifi_init();
 void wifi_iteration(int degrees, float* v);
+void handleClient() ;

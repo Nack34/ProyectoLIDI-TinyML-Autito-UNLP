@@ -3,16 +3,25 @@
 
 // ----------- setup ----------- //
 void setup() {
+  Serial.begin(115200);
   wifi_init();
   pixel_sumation_init();
 }
 
 // ----------- loop ----------- //
 
-void loop() {
-  PredictionResult result = pixel_sumation_iteration();
+unsigned long previousMillis = 0;
+const long interval = 100;
 
-  wifi_iteration(result.prediccion, result.foto);
-  delay(500);
-  wifi_iteration(result.prediccion, result.foto);
+void loop() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    
+    PredictionResult result = pixel_sumation_iteration();
+    wifi_iteration(result.prediccion, result.foto);
+  }
+
+  handleClient();
 }

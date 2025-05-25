@@ -33,7 +33,6 @@ char* labels[] = {"Adelante", "Izquierda", "Derecha"};
 // ----------- SETUP ----------- //
 void pixel_sumation_init() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
-  Serial.begin(115200);
 
   Serial.println("Bienvenido pececillo");
   Serial.setDebugOutput(false);
