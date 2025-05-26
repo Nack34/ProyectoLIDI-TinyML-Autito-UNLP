@@ -38,6 +38,7 @@ __pycache__/
 *.pyd
 
 # ML-Agents results and configs
+ml-agents/
 results/
 models/
 summaries/
