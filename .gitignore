@@ -47,7 +47,6 @@ results/
 models/
 summaries/
 checkpoints/
-*.onnx
 
 # Jupyter notebooks (si los usás)
 .ipynb_checkpoints/
