@@ -61,3 +61,28 @@ Luego de crear el entorno, es necesario clonar el repositorio oficial de ML-Agen
 ```bash
 git clone --branch release_20 https://github.com/Unity-Technologies/ml-agents.git
 ```
+
+## Guía para entrenar y usar un modelo
+
+### 1. Entrenar el modelo
+
+Para entrenar el modelo se debe usar el siguiente comando
+```bash
+mlagents-learn [direccion al archivo de configuracion yaml]  --run-id=[Nombre que tendra la run (debe ser unico)]
+```
+Example: 
+
+```bash
+mlagents-learn config/ppo/3DBall.yaml --run-id=first3DBallRun 
+```
+
+> *Nota:* Usar la flag `--resume` si el entrenamiento habia sido parado con Ctrl+C
+
+Luego de ejecutar el comando se debera poner el boton de "Play" en Unity. Para una guia mas detallada mirar [Getting Started Guide](https://github.com/Unity-Technologies/ml-agents/blob/release_20_docs/docs/Getting-Started.md)
+
+### 2. Probar el modelo
+
+- Luego de entrenar el modelo, este deberia de estar ubicado en results/<run-identifier>/<model_name>.onnx
+- Arrastrar el modelo al proyecto unity para copiarlo.
+- Por ultimo settear el modelo para su uso como se explica en [Getting Started Guide](https://github.com/Unity-Technologies/ml-agents/blob/release_20_docs/docs/Getting-Started.md)
+
