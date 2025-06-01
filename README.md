@@ -78,7 +78,13 @@ mlagents-learn config/ppo/3DBall.yaml --run-id=first3DBallRun
 
 > *Nota:* Usar la flag `--resume` si el entrenamiento habia sido parado con Ctrl+C
 
-Luego de ejecutar el comando se debera poner el boton de "Play" en Unity. Para una guia mas detallada mirar [Getting Started Guide](https://github.com/Unity-Technologies/ml-agents/blob/release_20_docs/docs/Getting-Started.md)
+Luego de ejecutar el comando se debera poner el boton de "Play" en Unity. Para una guia mas detallada mirar [Getting Started Guide](https://github.com/Unity-Technologies/ml-agents/blob/release_20_docs/docs/Getting-Started.md). 
+
+
+En simultaneo, abrir otra terminal y ejecutar para ver un analisis y graficas de la ejecucucion (Se tiene que recargar la pagina para actualizarla)
+```bash
+tensorboard --logdir results
+```
 
 ### 2. Probar el modelo
 
