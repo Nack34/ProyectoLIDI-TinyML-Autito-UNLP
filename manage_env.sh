@@ -28,24 +28,14 @@ EXTRA_FILE="env_${MODE}_extra.yml"
 if [[ "$ACTION" == "-p" ]]; then
   echo "Exportando entorno '$ENV_NAME'..."
 
-  # Exportar dependencias completas del entorno (sin builds)
   conda env export -n "$ENV_NAME" --no-builds > temp_full.yml
 
-  # Extraer en un temporal las líneas de dependencias (solo las que empiezan con "- ")
   grep '^[[:space:]]*-[[:space:]]torch*' "$EXTRA_FILE" > extra_lines.tmp
-
-  # Mostrar en pantalla su contenido
-  #echo "=== Contenido de extra_lines.tmp ==="
-  #cat extra_lines.tmp
-  #echo "==================================="
 
   # Filtrar temp_full.yml: cualquier línea que coincida EXACTAMENTE con alguna de extra_lines.tmp
   grep -Fv -f extra_lines.tmp temp_full.yml > "$COMMON_FILE"
 
-  # Limpiar temporales
   rm extra_lines.tmp
-
-  # Limpiar archivo temporal
   rm temp_full.yml
 
 
@@ -54,17 +44,38 @@ if [[ "$ACTION" == "-p" ]]; then
 
 elif [[ "$ACTION" == "-u" ]]; then
   echo "Actualizando entorno '$ENV_NAME' con $MODE..."
+  
+  cp "$COMMON_FILE" temp_env.yml
+  YML_FILE="temp_env.yml"
 
-  conda env update -n "$ENV_NAME" -f "$COMMON_FILE" --prune
-  conda env update -n "$ENV_NAME" -f "$EXTRA_FILE"
+  sed -i '/- "--index-url https:\/\/download.pytorch.org\/whl\/cu126"/d' "$YML_FILE"
+  sed -i '/  - pip:/a \      - "--extra-index-url https:\/\/download.pytorch.org\/whl\/cu126"  # Changed to EXTRA-index \& moved to TOP' "$YML_FILE"
+  sed -i 's/# Changed to EXTRA-index \& moved to TOP//' "$YML_FILE"
+  sed 's/^/      /' "$EXTRA_FILE" >> temp_env.yml
+
+  conda env update -n "$COMMON_FILE" -f temp_env.yml --prune
+
+  rm temp_env.yml
 
   echo "Entorno actualizado."
 
 elif [[ "$ACTION" == "-c" ]]; then
   echo "Creando entorno '$ENV_NAME' con $MODE..."
+  conda remove --name ProyectoLIDI-TinyML-Autito-UNLP --all -y
+  
+  cp "$COMMON_FILE" temp_env.yml
+  YML_FILE="temp_env.yml"
 
-  conda env create -n "$ENV_NAME" -f "$COMMON_FILE"
-  conda env update -n "$ENV_NAME" -f "$EXTRA_FILE"
+  sed -i '/- "--index-url https:\/\/download.pytorch.org\/whl\/cu126"/d' "$YML_FILE"
+  if [[ "$ACTION" == "-p" ]]; then
+    sed -i '/  - pip:/a \      - "--extra-index-url https:\/\/download.pytorch.org\/whl\/cu126"  # Changed to EXTRA-index \& moved to TOP' "$YML_FILE"
+    sed -i 's/# Changed to EXTRA-index \& moved to TOP//' "$YML_FILE"
+  fi
+  sed 's/^/      /' "$EXTRA_FILE" >> temp_env.yml
+
+  conda env create -n "$ENV_NAME" -f temp_env.yml
+
+  rm temp_env.yml
 
   echo "Entorno creado."
 fi

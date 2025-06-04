@@ -8,15 +8,23 @@ dependencies:
   - bzip2=1.0.8
   - ca-certificates=2025.4.26
   - certifi=2025.4.26
+  - cffi=1.17.1
   - charset-normalizer=3.3.2
+  - h2=4.2.0
+  - hpack=4.1.0
+  - hyperframe=6.1.0
   - idna=3.7
   - jq=1.6
   - libffi=3.4.4
+  - liblzma=5.6.4
+  - liblzma-devel=5.6.4
+  - libsqlite=3.45.3
   - libzlib=1.2.13
   - m2w64-libwinpthread-git=5.0.0.4634.697f757
   - msys2-conda-epoch=20160418
   - openssl=3.1.0
   - pip=25.1.1
+  - pycparser=2.22
   - pysocks=1.7.1
   - python=3.10.12
   - python_abi=3.10
@@ -36,9 +44,11 @@ dependencies:
   - win_inet_pton=1.1.0
   - xmltodict=0.14.2
   - xz=5.6.4
+  - xz-tools=5.6.4
   - yaml=0.2.5
   - yq=3.4.3
   - zlib=1.2.13
+  - zstandard=0.23.0
   - pip:
       - absl-py==2.2.2
       - attrs==25.3.0
