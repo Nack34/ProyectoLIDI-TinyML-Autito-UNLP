@@ -64,7 +64,15 @@ git clone --branch release_20 https://github.com/Unity-Technologies/ml-agents.gi
 
 ## Guía para entrenar y usar un modelo
 
-### 1. Entrenar el modelo
+### 1. Activar `Run In Background` en Unity
+
+- En el proyecto de Unity, ve a Edit > Project Settings > Player.
+- Selecciona la pestaña Resolution and Presentation.
+- Marca la casilla Run In Background.
+
+### 2. Posicionarse en la carpeta ml-agents 
+
+### 3. Entrenar el modelo
 
 Para entrenar el modelo se debe usar el siguiente comando
 ```bash
@@ -86,9 +94,9 @@ En simultaneo, abrir otra terminal y ejecutar para ver un analisis y graficas de
 tensorboard --logdir results
 ```
 
-### 2. Probar el modelo
+### 4. Probar el modelo
 
-- Luego de entrenar el modelo, este deberia de estar ubicado en results/<run-identifier>/<model_name>.onnx
+- Luego de entrenar el modelo, este deberia de estar ubicado en `results/<run-identifier>/<model_name>.onnx`
 - Arrastrar el modelo al proyecto unity para copiarlo.
 - Por ultimo settear el modelo para su uso como se explica en [Getting Started Guide](https://github.com/Unity-Technologies/ml-agents/blob/release_20_docs/docs/Getting-Started.md)
 
