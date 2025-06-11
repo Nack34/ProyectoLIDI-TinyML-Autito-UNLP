@@ -53,7 +53,7 @@ elif [[ "$ACTION" == "-u" ]]; then
   sed -i 's/# Changed to EXTRA-index \& moved to TOP//' "$YML_FILE"
   sed 's/^/      /' "$EXTRA_FILE" >> temp_env.yml
 
-  conda env update -n "$COMMON_FILE" -f temp_env.yml --prune
+  conda env update -n "$ENV_NAME" -f temp_env.yml --prune
 
   rm temp_env.yml
 
@@ -61,7 +61,7 @@ elif [[ "$ACTION" == "-u" ]]; then
 
 elif [[ "$ACTION" == "-c" ]]; then
   echo "Creando entorno '$ENV_NAME' con $MODE..."
-  conda remove --name ProyectoLIDI-TinyML-Autito-UNLP --all -y
+  conda remove --name "$ENV_NAME" --all -y
   
   cp "$COMMON_FILE" temp_env.yml
   YML_FILE="temp_env.yml"
