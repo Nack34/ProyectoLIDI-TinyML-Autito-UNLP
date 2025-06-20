@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   envPrefab: {fileID: 7635628580028075336, guid: 1e44169d7f5288e44a9f0a407ddbed24, type: 3}
   numEnvironmentsSqrt: 4
-  spacing: 50
+  spacing: 5
 --- !u!4 &677073236
 Transform:
   m_ObjectHideFlags: 0
