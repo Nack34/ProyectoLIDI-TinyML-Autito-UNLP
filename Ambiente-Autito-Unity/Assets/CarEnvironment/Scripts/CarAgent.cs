@@ -17,38 +17,43 @@ public class CarAgent : Agent
 
     public override void OnEpisodeBegin()
     {
+        Debug.Log("OnEpisodeBegin");
+
         // If the Agent fell, zero its momentum
-        if (this.transform.localPosition.y < 0)
+        /*if (this.transform.localPosition.y < 0)
         {
+            Debug.Log("y < 0");
+
             this.rBody.angularVelocity = Vector3.zero;
             this.rBody.linearVelocity = Vector3.zero;
             this.transform.localPosition = new Vector3(0, 0.5f, 0);
-        }
+        }*/
 
         // Move the target to a new spot
-        //Target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
+        Target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
 
     }
 
-    public override void CollectObservations(VectorSensor sensor)
+
+    [SerializeField] private bool useConstantMovement = true;      
+    [SerializeField] private float constantMovementValue = 1.0f;      
+    [SerializeField] private float steeringSpeed = 100f;      // Qué tan rápido gira (grados por segundo por unidad de input)
+    [SerializeField] private float moveSpeed = 5f;            // Qué tan rápido acelera
+
+    public void MoveCar(float steeringInput, float throttleInput)
     {
-        // Target and Agent positions
-        sensor.AddObservation(Target.localPosition);
-        sensor.AddObservation(this.transform.localPosition);
+        // Rotar el cubo (como girar el volante)
+        float turnAmount = steeringInput * steeringSpeed * Time.deltaTime;
+        transform.Rotate(0f, turnAmount, 0f);
 
-        // Agent velocity
-        sensor.AddObservation(rBody.linearVelocity.x);
-        sensor.AddObservation(rBody.linearVelocity.z);
+        // Mover el cubo hacia adelante (en su propia orientación)
+        Vector3 move = transform.forward * throttleInput * moveSpeed * Time.deltaTime;
+        transform.localPosition += move;
     }
 
-    [SerializeField] private float forceMultiplier = 10;
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Actions, size = 2
-        Vector3 controlSignal = Vector3.zero;
-        controlSignal.x = actionBuffers.ContinuousActions[0];
-        controlSignal.z = actionBuffers.ContinuousActions[1];
-        rBody.AddForce(controlSignal * forceMultiplier);
+        MoveCar(actionBuffers.ContinuousActions[0], !useConstantMovement ? actionBuffers.ContinuousActions[1] : constantMovementValue);
 
         // Rewards
         float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
