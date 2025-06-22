@@ -2,36 +2,40 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using System.Collections.Generic;
+using System.Linq;
 
 public class CarAgent : Agent
 {
 
+    private int dir = 1;
+    private int currPos = 0;
+    public List<Vector2> TargetPos;
     public Transform Target;
     private Rigidbody rBody;
     private void Start()
     {
         rBody = GetComponent<Rigidbody>();
+        //Debug.Log(this.transform.position.x);
 
-        Debug.Log(this.transform.position.x);
+
+        if (TargetPos.Count < 1)
+        {
+            TargetPos.Add(Vector2.zero);
+            TargetPos.Add(new Vector2(1, 0));
+            TargetPos.Add(new Vector2(-1, 0));
+        }
     }
+
 
     public override void OnEpisodeBegin()
     {
         Debug.Log("OnEpisodeBegin");
 
-        // If the Agent fell, zero its momentum
-        /*if (this.transform.localPosition.y < 0)
-        {
-            Debug.Log("y < 0");
-
-            this.rBody.angularVelocity = Vector3.zero;
-            this.rBody.linearVelocity = Vector3.zero;
-            this.transform.localPosition = new Vector3(0, 0.5f, 0);
-        }*/
-
         // Move the target to a new spot
-        Target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
-
+        Target.localPosition = new Vector3(TargetPos[currPos].x, 0.5f, TargetPos[currPos].y);
+        currPos += dir;
+        if (currPos == TargetPos.Count-1 || currPos == 0) dir *= -1;
     }
 
 
