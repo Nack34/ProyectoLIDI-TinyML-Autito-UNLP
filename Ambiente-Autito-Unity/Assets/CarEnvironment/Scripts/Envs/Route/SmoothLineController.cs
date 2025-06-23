@@ -4,7 +4,7 @@ using UnityEngine;
 [ExecuteAlways]
 public class SmoothLineController : MonoBehaviour
 {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         void OnEnable()
         {
             UnityEditor.EditorApplication.update += EditorUpdate;
@@ -22,14 +22,14 @@ public class SmoothLineController : MonoBehaviour
                 UpdateLine();
             }
         }
-    #endif
+#endif
 
     [Header("Puntos de Control")]
-    public List<Transform> controlPoints = new List<Transform>();
+    [SerializeField] private List<Transform> controlPoints = new List<Transform>();
 
     [Header("Configuración de Línea")]
-    [Range(0.1f, 5f)] public float lineWidth = 0.5f;
-    [Range(2, 100)] public int resolution = 30;
+    [Range(0.1f, 5f)][SerializeField] private float lineWidth = 0.5f;
+    [Range(2, 100)][SerializeField] private int resolution = 30;
 
     private LineRenderer lineRenderer;
 
@@ -74,7 +74,7 @@ public class SmoothLineController : MonoBehaviour
         lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
         lineRenderer.startColor = Color.white;
         lineRenderer.endColor = Color.white;
-        
+
         // Hace que el quad de la línea se alinee con el eje Z del transform,
         // no hacia la cámara
         transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
@@ -131,13 +131,59 @@ public class SmoothLineController : MonoBehaviour
         );
     }
 
-    // Método para agregar puntos desde el inspector
-    public void AddControlPoint(GameObject newPoint)
+    // ------------- API ----------------
+    public void MoveLastToNext()
+    {
+        if (controlPoints.Count < 2) return;
+
+        Vector3 last = controlPoints[controlPoints.Count - 1].position;
+        Vector3 secondLast = controlPoints[controlPoints.Count - 2].position;
+
+        // Dirección entre los dos últimos puntos
+        Vector3 direction = (last - secondLast).normalized;
+
+        // Random de distancia y ángulo
+        float distance = Random.Range(5f, 20f);
+        float angle = Random.Range(-90f, 90f);
+
+        // Rotar la dirección en el plano XZ
+        Quaternion rotation = Quaternion.Euler(0f, angle, 0f);
+        Vector3 rotatedDirection = rotation * direction;
+
+        // Calcular nueva posición
+        Vector3 newPosition = last + rotatedDirection * distance;
+
+        // Pasar solo X y Z como Vector2
+        MoveLastPointToFirstAt(new Vector2(newPosition.x, newPosition.z));
+    }
+
+
+    public void MoveLastPointToFirstAt(Vector2 newPos)
+    {
+        Transform point = RemovePoint(0);
+        point.position = new Vector3(newPos.x, point.position.y, newPos.y);
+        AddPoint(point);
+    }
+    public void AddPoint(Transform newPoint)
     {
         if (newPoint != null)
         {
-            controlPoints.Add(newPoint.transform);
+            controlPoints.Add(newPoint);
             UpdateLine();
         }
     }
+    public Transform RemovePoint(int pointIndex)
+    {
+        if (controlPoints.Count <= pointIndex) return null;
+        Transform point = controlPoints[pointIndex];
+
+        if (point != null)
+        {
+            controlPoints.Remove(point);
+            UpdateLine();
+        }
+
+        return point;
+    }
+
 }
