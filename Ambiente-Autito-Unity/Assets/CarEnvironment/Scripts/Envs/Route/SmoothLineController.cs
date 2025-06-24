@@ -33,7 +33,7 @@ public class SmoothLineController : MonoBehaviour
 
     private LineRenderer lineRenderer;
 
-    void Start()
+    void Awake()
     {
         InitializeControlPoints();
         InitializeLineRenderer();
@@ -133,29 +133,15 @@ public class SmoothLineController : MonoBehaviour
     }
 
     // ---------------------------------------------------------------------------------------
+    public Transform GetTarget() => controlPoints[2];
     private void InitializeControlPoints()
     {
-        int i=0;
-        Vector3 last = Vector3.zero;
-        Vector3 secondLast = Vector3.zero;
-        foreach (var point in controlPoints)
-        {
-            if (i == 0)
-            {
-                secondLast = point.position;
-            }
-            else if (i == 1)
-            {
-                last = point.position;
-            }
-            else
-            {
-                Vector3 newPos = getNextPos(last, secondLast);
-                setPos2D(point, newPos);
-                secondLast = last;
-                last = point.position;
-            }
-            i++;
+        for (int i = 3; i < controlPoints.Count; i++) {
+            Vector3 newPos = getNextPos(
+                controlPoints[i-1].position, 
+                controlPoints[i-2].position
+            );
+            setPos2D(controlPoints[i], newPos);
         }
     }
 
@@ -178,7 +164,7 @@ public class SmoothLineController : MonoBehaviour
         return newPosition;
     }
     private Transform setPos2D(Transform t, Vector3 newPos) {
-        t.position = new Vector3(newPos.x, t.position.y, newPos.y);
+        t.position = new Vector3(newPos.x, t.position.y, newPos.z);
         return t;
     }
     public void MoveLastToNext()
@@ -191,10 +177,10 @@ public class SmoothLineController : MonoBehaviour
         Vector3 newPosition = getNextPos(last, secondLast);
 
         // Pasar solo X y Z como Vector2
-        MoveLastPointToFirstAt(new Vector2(newPosition.x, newPosition.z));
+        MoveLastPointToFirstAt(newPosition);
     }
 
-    private void MoveLastPointToFirstAt(Vector2 newPos)
+    private void MoveLastPointToFirstAt(Vector3 newPos)
     {
         Transform point = RemovePoint(0);
         point = setPos2D(point, newPos);

@@ -7,35 +7,20 @@ using System.Linq;
 
 public class CarAgent : Agent
 {
-
-    private int dir = 1;
-    private int currPos = 0;
-    public List<Vector2> TargetPos;
     public Transform Target;
+    public RouteManager routeManager;
     private Rigidbody rBody;
-    private void Start()
+    protected override void Awake()
     {
         rBody = GetComponent<Rigidbody>();
-        //Debug.Log(this.transform.position.x);
-
-
-        if (TargetPos.Count < 1)
-        {
-            TargetPos.Add(Vector2.zero);
-            TargetPos.Add(new Vector2(1, 0));
-            TargetPos.Add(new Vector2(-1, 0));
-        }
+        Target = routeManager.GetInitialTarget();
+        base.Awake();
     }
 
 
     public override void OnEpisodeBegin()
     {
         Debug.Log("OnEpisodeBegin");
-
-        // Move the target to a new spot
-        Target.localPosition = new Vector3(TargetPos[currPos].x, 0.5f, TargetPos[currPos].y);
-        currPos += dir;
-        if (currPos == TargetPos.Count-1 || currPos == 0) dir *= -1;
     }
 
 
@@ -60,12 +45,15 @@ public class CarAgent : Agent
         MoveCar(actionBuffers.ContinuousActions[0], !useConstantMovement ? actionBuffers.ContinuousActions[1] : constantMovementValue);
 
         // Rewards
-        float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
+        Vector2 carPos2D = new Vector2 (this.transform.position.x, this.transform.position.z);
+        Vector2 targetPos2D = new Vector2 (Target.position.x, Target.position.z); 
+        float distanceToTarget = Vector2.Distance(carPos2D, targetPos2D);
 
         // Reached target
         if (distanceToTarget < 1.42f)
         {
             Debug.Log("CERCA");
+            Target = routeManager.GetTarget();
             SetReward(1.0f);
             EndEpisode();
         }
