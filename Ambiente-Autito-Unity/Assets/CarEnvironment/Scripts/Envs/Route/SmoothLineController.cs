@@ -35,6 +35,7 @@ public class SmoothLineController : MonoBehaviour
 
     void Start()
     {
+        InitializeControlPoints();
         InitializeLineRenderer();
     }
 
@@ -131,14 +132,36 @@ public class SmoothLineController : MonoBehaviour
         );
     }
 
-    // ------------- API ----------------
-    public void MoveLastToNext()
+    // ---------------------------------------------------------------------------------------
+    private void InitializeControlPoints()
     {
-        if (controlPoints.Count < 2) return;
+        int i=0;
+        Vector3 last = Vector3.zero;
+        Vector3 secondLast = Vector3.zero;
+        foreach (var point in controlPoints)
+        {
+            if (i == 0)
+            {
+                secondLast = point.position;
+            }
+            else if (i == 1)
+            {
+                last = point.position;
+            }
+            else
+            {
+                Vector3 newPos = getNextPos(last, secondLast);
+                setPos2D(point, newPos);
+                secondLast = last;
+                last = point.position;
+            }
+            i++;
+        }
+    }
 
-        Vector3 last = controlPoints[controlPoints.Count - 1].position;
-        Vector3 secondLast = controlPoints[controlPoints.Count - 2].position;
 
+    private Vector3 getNextPos(Vector3 last, Vector3 secondLast)
+    {
         // Dirección entre los dos últimos puntos
         Vector3 direction = (last - secondLast).normalized;
 
@@ -152,19 +175,32 @@ public class SmoothLineController : MonoBehaviour
 
         // Calcular nueva posición
         Vector3 newPosition = last + rotatedDirection * distance;
+        return newPosition;
+    }
+    private Transform setPos2D(Transform t, Vector3 newPos) {
+        t.position = new Vector3(newPos.x, t.position.y, newPos.y);
+        return t;
+    }
+    public void MoveLastToNext()
+    {
+        if (controlPoints.Count < 2) return;
+
+        Vector3 last = controlPoints[controlPoints.Count - 1].position;
+        Vector3 secondLast = controlPoints[controlPoints.Count - 2].position;
+
+        Vector3 newPosition = getNextPos(last, secondLast);
 
         // Pasar solo X y Z como Vector2
         MoveLastPointToFirstAt(new Vector2(newPosition.x, newPosition.z));
     }
 
-
-    public void MoveLastPointToFirstAt(Vector2 newPos)
+    private void MoveLastPointToFirstAt(Vector2 newPos)
     {
         Transform point = RemovePoint(0);
-        point.position = new Vector3(newPos.x, point.position.y, newPos.y);
+        point = setPos2D(point, newPos);
         AddPoint(point);
     }
-    public void AddPoint(Transform newPoint)
+    private void AddPoint(Transform newPoint)
     {
         if (newPoint != null)
         {
@@ -172,7 +208,7 @@ public class SmoothLineController : MonoBehaviour
             UpdateLine();
         }
     }
-    public Transform RemovePoint(int pointIndex)
+    private Transform RemovePoint(int pointIndex)
     {
         if (controlPoints.Count <= pointIndex) return null;
         Transform point = controlPoints[pointIndex];

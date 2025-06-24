@@ -4,20 +4,22 @@ public class RouteManager : MonoBehaviour
 {
     [SerializeField] private SmoothLineController lineController;
     [SerializeField] private bool Move = false;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [SerializeField] private float lastMoveTime = 0f;
 
-    // Update is called once per frame
     void Update()
     {
         if (Move)
         {
             Move = false;
-            lineController.MoveLastToNext();
+            ContinueRoad();
+            lastMoveTime = Time.time;
+        }
+
+        if (Time.time - lastMoveTime >= 1f)
+        {
+            Move = true;
         }
     }
+
+    public void ContinueRoad() => lineController.MoveLastToNext();
 }

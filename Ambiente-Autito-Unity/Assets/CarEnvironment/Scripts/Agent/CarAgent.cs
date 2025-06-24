@@ -65,6 +65,7 @@ public class CarAgent : Agent
         // Reached target
         if (distanceToTarget < 1.42f)
         {
+            Debug.Log("CERCA");
             SetReward(1.0f);
             EndEpisode();
         }
@@ -72,6 +73,7 @@ public class CarAgent : Agent
         // Fell off platform
         else if (this.transform.localPosition.y < 0)
         {
+            Debug.Log("ABAJO");
             EndEpisode();
         }
     }
