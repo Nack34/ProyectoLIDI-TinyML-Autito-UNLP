@@ -79,6 +79,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lineController: {fileID: 2381394932235222158}
   Move: 0
+  lastMoveTime: 0
 --- !u!1 &6909021481195701777
 GameObject:
   m_ObjectHideFlags: 0
